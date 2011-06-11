@@ -1,33 +1,40 @@
 #!/usr/bin/env python
 
 # FlickrGetter.py
-# Seth Hoenig (c) April 2011
+# Seth Hoenig April 2011
 
-import sys
+import sys 
 import os
 import urllib
 
 class Getter:
-    def __init__(self, pagemin=None, pagemax=None, urlbase=None, size=None,
-                       destdir="~/", imgbase=None, imgend=None):
-        if urlbase==None or size==None or imgbase==None or imgend==None:
+
+    def __init__(self, pagemin=None, pagemax=None, size=None,
+                       destdir=None, album = None ):
+        if  size==None or album==None: 
             print "Invlaid Setup: "
             print "\tsize: %s"    % str(size)
             print "\tpagemin: %s" % str(pagemin)
             print "\tpagemax: %s" % str(pagemax)
-            print "\turlbase: %s" % str(urlbase)
             print "\tdestdir: %s" % str(destdir)
-            print "\timgbase: %s" % str(imgbase)
-            print "\timgend: %s"  % str(imgend)
+            print "\talbum: %s" % str(album)
             sys.exit(-1)
-       
+        
+        self.urlbase =  "http://www.flickr.com/photos/" + album + "/page"
         self.pagemax = pagemax
         self.pagemin = pagemin
-        self.urlbase = urlbase
+        self.imgbase = "http://www.flickr.com/photos/" + album + "/"
         self.destdir = destdir
-        self.imgbase = imgbase
-        self.imgend = imgend
+        self.imgend = "/sizes/" + size + "/in/photostream/"
         self.size = size
+
+        print "self.urlbase: " + self.urlbase
+        print "self.pagemax: " + str(self.pagemax)
+        print "self.pagemin: " + str(self.pagemin)
+        print "self.imgbase: " + self.imgbase
+        print "self.destdir: " + self.destdir
+        print "self.imgend: " + self.imgend
+        print "self.size: " + self.size
 
         self.ignore = self.getIgnoreSet() 
 
@@ -96,15 +103,16 @@ if __name__ == "__main__":
     if test:
         print "-- Testing Getter Class --"
         PAGEMIN = 1
-        PAGEMAX = 1
+        PAGEMAX = 11
         SIZE = "o"
-        URLBASE = "http://www.flickr.com/photos/gracepointaustin/page"
-        DESTDIR = "/Users/seth/Pictures/KoinoniaFlickr"
-        IMGBASE = "http://www.flickr.com/photos/gracepointaustin/"
-        IMGEND = "/sizes/o/in/photostream/"
+        #URLBASE = "http://www.flickr.com/photos/gracepointaustin/page"
+    #    DESTDIR = "/Users/seth/Pictures/Ktemp"
+        DESTDIR = "/Users/seth/Pictures/Koinonia"
+        #IMGBASE = "http://www.flickr.com/photos/gracepointaustin/"
+        ALBUM = "gracepointaustin"
 
         
-        g = Getter(PAGEMIN,PAGEMAX,URLBASE,SIZE,DESTDIR,IMGBASE,IMGEND)
+        g = Getter(PAGEMIN,PAGEMAX,SIZE,DESTDIR, ALBUM)
         g.executeGets()
 
     else:
