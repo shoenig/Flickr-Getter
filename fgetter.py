@@ -66,10 +66,9 @@ class Getter:
 
     def getIgnoreSet(self):
         files = set()
-        c = 0
         flist = os.listdir(self.destdir)
-        for file in flist:
-            files.add(file.strip('.jpg'))
+        for fle in flist:
+            files.add(fle.strip('.jpg'))
         return files
 
     def doPage(self, curPage):
