@@ -9,41 +9,52 @@ import urllib
 
 class Getter:
 
-    def __init__(self, pagemin=None, pagemax=None, size=None,
-                       destdir=None, album = None ):
+    def __init__(self, size=None, destdir=None, album = None):
         if  size==None or album==None: 
-            print "Invlaid Setup: "
-            print "\tsize: %s"    % str(size)
-            print "\tpagemin: %s" % str(pagemin)
-            print "\tpagemax: %s" % str(pagemax)
-            print "\tdestdir: %s" % str(destdir)
-            print "\talbum: %s" % str(album)
+            print 'Invlaid Setup: '
+            print '\tsize: %s'    % str(size)
+            print '\tdestdir: %s' % str(destdir)
+            print '\talbum: %s' % str(album)
+            print '...exiting'
             sys.exit(-1)
         
-        self.urlbase =  "http://www.flickr.com/photos/" + album + "/page"
-        self.pagemax = pagemax
-        self.pagemin = pagemin
-        self.imgbase = "http://www.flickr.com/photos/" + album + "/"
+        self.urlbase =  'http://www.flickr.com/photos/' + album + '/page'
+        self.pagemin = 0
+        self.imgbase = 'http://www.flickr.com/photos/' + album + '/'
         self.destdir = destdir
-        self.imgend = "/sizes/" + size + "/in/photostream/"
+        self.imgend = '/sizes/' + size + '/in/photostream/'
         self.size = size
-
-        print "self.urlbase: " + self.urlbase
-        print "self.pagemax: " + str(self.pagemax)
-        print "self.pagemin: " + str(self.pagemin)
-        print "self.imgbase: " + self.imgbase
-        print "self.destdir: " + self.destdir
-        print "self.imgend: " + self.imgend
-        print "self.size: " + self.size
+        self.pagemax = self.getNumPages()
+        print '(%r pages) --' % (self.pagemax)
+#        print 'self.urlbase: ' + self.urlbase
+#        print 'self.imgbase: ' + self.imgbase
+#        print 'self.destdir: ' + self.destdir
+#        print 'self.imgend: ' + self.imgend
+#        print 'self.size: ' + self.size
 
         self.ignore = self.getIgnoreSet() 
 
-        print "ignore: %s" % str(self.ignore)
+    def getNumPages(self):
+        f = urllib.urlopen(self.imgbase)
+        content = f.read()
+        f.close()
+        splitted = content.split('/')
+        maxpage = 0
+        for s in splitted:
+            s = s.strip()
+            if len(s) >= 5 and s[0:4] == 'page':
+                val = int(s[4:])
+                if val > maxpage:
+                    maxpage = val
+        return maxpage
 
     def executeGets(self):
         for i in xrange(self.pagemin, self.pagemax+1):
-            print "Working on page: %d" % i
-            self.doPage(i)
+            print 'Working on page: %d' % i
+            all_ignored = self.doPage(i)
+            if all_ignored:
+                print 'Done.'
+                break
 
     def getIgnoreSet(self):
         files = set()
@@ -54,23 +65,25 @@ class Getter:
         return files
 
     def doPage(self, curPage):
-        urlstr = self.urlbase + str(curPage) + "/"
-        #print "urlstr: %s" % urlstr
+        urlstr = self.urlbase + str(curPage) + '/'
         f = urllib.urlopen(urlstr)
         content = f.read()
         f.close()
-        #print content
         splitted = content.split('"')
+        all_ignored = True
         for s in  splitted:
             s = s.strip()
-            if "sv_title_" in s:
-                imgnum = s.split("_")[2]
-                print "image: %s" % imgnum,
+            if 'sv_title_' in s:
+                imgnum = s.split('_')[2]
+                #print '\timage: %s' % imgnum,
                 if imgnum in self.ignore:
-                    print " ...ignore"
+                    #print ' ...ignore'
+                    pass
                 else:
-                    print " ...get"
+                    #print ' ...get'
                     self.getImage(imgnum)
+                    all_ignored = False
+        return all_ignored
 
     def getImage(self, imgnum):
         imgpageurl = self.imgbase + imgnum + self.imgend
@@ -80,13 +93,13 @@ class Getter:
         splitted = content.split('"')
         for s in splitted:
             s = s.strip()
-            if "_"+self.size+".jpg" in s:
-                print "imgurl: %s" % s
+            if '_'+self.size+'.jpg' in s:
+                print 'imgurl: %s' % s
                 self.downloadImage(s, imgnum)
 
     def downloadImage(self, imgurl, imgnum):
-        fpath = self.destdir + "/" + imgnum + ".jpg" 
-        dlimage = file(fpath, "wb")
+        fpath = self.destdir + '/' + imgnum + '.jpg' 
+        dlimage = file(fpath, 'wb')
         img = urllib.urlopen(imgurl)
         while True:
             buf = img.read(65536)
@@ -97,24 +110,27 @@ class Getter:
         img.close()
 
 
-if __name__ == "__main__":
-    test = True
+if __name__ == '__main__':
+    test = False
 
-    if test:
-        print "-- Testing Getter Class --"
-        PAGEMIN = 1
-        PAGEMAX = 11
-        SIZE = "o"
-        #URLBASE = "http://www.flickr.com/photos/gracepointaustin/page"
-    #    DESTDIR = "/Users/seth/Pictures/Ktemp"
-        DESTDIR = "/Users/seth/Pictures/Koinonia"
-        #IMGBASE = "http://www.flickr.com/photos/gracepointaustin/"
-        ALBUM = "gracepointaustin"
+    if not test:
+        print '-- RUNNING ',
+        SIZE = 'o'
+        #URLBASE = 'http://www.flickr.com/photos/gracepointaustin/page'
+#       DESTDIR = '/Users/seth/Pictures/Ktemp'
+        DESTDIR = '/Users/seth/Pictures/Koinonia'
+        #IMGBASE = 'http://www.flickr.com/photos/gracepointaustin/'
+        ALBUM = 'gracepointaustin'
 
         
-        g = Getter(PAGEMIN,PAGEMAX,SIZE,DESTDIR, ALBUM)
+        g = Getter(size=SIZE,destdir=DESTDIR, album=ALBUM)
         g.executeGets()
 
-    else:
-        pass
-        # run normal mode
+    else:  # test mode
+        size = 'o'
+        destdir = '/Users/seth/Pictures/Koinonia'
+        album = 'gracepointaustin'
+        g = Getter(size=size, destdir=destdir, album=album)
+        n = g.getNumPages()
+        print 'n: %r' % (n,)
+
