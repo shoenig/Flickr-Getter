@@ -129,62 +129,45 @@ def helpit():
     print 'example size: -s o'
 
 if __name__ == '__main__':
-    test = False
 
-    if not test:
-        try:
-            opts, args = getopt.getopt(sys.argv[1:], 'vhd:a:s:',
-                                ['help','dest','album','verbose','size'])
-        except getopt.GetoptError, err:
-            print str(err)
-            sys.exit(2)
-        verbose = False
-        helpme = False
-        dest = None
-        album = None
-        size = None
-        for o, a in opts:
-            if o in ('-v', '--verbose'):
-                verbose = True
-            elif o in ('-h', '--help'):
-                helpme = True
-            elif o in ('-d', '--destdir'):
-                dest = a
-            elif o in ('-a', '--album'):
-                album = a
-            elif o in ('-s', '--size'):
-                size = a
-            else:
-                print 'Unknown Option'
-                helpit()
-                sys.exit(0)
-
-        if helpme or not dest or not album or not size:
+    try:
+        opts, args = getopt.getopt(sys.argv[1:], 'vhd:a:s:',
+                            ['help','dest','album','verbose','size'])
+    except getopt.GetoptError, err:
+        print str(err)
+        sys.exit(2)
+    verbose = False
+    helpme = False
+    dest = None
+    album = None
+    size = None
+    for o, a in opts:
+        if o in ('-v', '--verbose'):
+            verbose = True
+        elif o in ('-h', '--help'):
+            helpme = True
+        elif o in ('-d', '--destdir'):
+            dest = a
+        elif o in ('-a', '--album'):
+            album = a
+        elif o in ('-s', '--size'):
+            size = a
+        else:
+            print 'Unknown Option'
             helpit()
             sys.exit(0)
 
-        if not size in ('o', 'l', 'm', 's'):
-            print 'invalid size'
-            helpit()
-            sys.exit(0)
+    if helpme or not dest or not album or not size:
+        helpit()
+        sys.exit(0)
 
-        print '-- DOWNLOADING ',
-        #size = 'o'
-        #URLBASE = 'http://www.flickr.com/photos/gracepointaustin/page'
-#       DESTDIR = '/Users/seth/Pictures/Ktemp'
-        #destdir = '/Users/seth/Pictures/Koinonia'
-        #IMGBASE = 'http://www.flickr.com/photos/gracepointaustin/'
-        #album = 'gracepointaustin'
+    if not size in ('o', 'l', 'm', 's'):
+        print 'invalid size'
+        helpit()
+        sys.exit(0)
 
-        
-        g = Getter(verbose=verbose, size=size, destdir=dest, album=album)
-        g.executeGets()
-
-    else:  # test mode
-        size = 'o'
-        destdir = '/Users/seth/Pictures/Koinonia'
-        album = 'gracepointaustin'
-        g = Getter(size=size, destdir=destdir, album=album)
-        n = g.getNumPages()
-        print 'n: %r' % (n,)
+    print '-- DOWNLOADING ',
+    
+    g = Getter(verbose=verbose, size=size, destdir=dest, album=album)
+    g.executeGets()
 
