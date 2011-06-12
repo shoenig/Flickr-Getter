@@ -3,13 +3,14 @@
 # FlickrGetter.py
 # Seth Hoenig April 2011
 
-import sys 
+import getopt
 import os
+import sys 
 import urllib
 
 class Getter:
 
-    def __init__(self, size=None, destdir=None, album = None):
+    def __init__(self, size=None, destdir=None, album = None, verbose=False):
         if  size==None or album==None: 
             print 'Invlaid Setup: '
             print '\tsize: %s'    % str(size)
@@ -18,6 +19,7 @@ class Getter:
             print '...exiting'
             sys.exit(-1)
         
+        self.verbose = verbose
         self.urlbase =  'http://www.flickr.com/photos/' + album + '/page'
         self.pagemin = 0
         self.imgbase = 'http://www.flickr.com/photos/' + album + '/'
@@ -25,14 +27,19 @@ class Getter:
         self.imgend = '/sizes/' + size + '/in/photostream/'
         self.size = size
         self.pagemax = self.getNumPages()
-        print '(%r pages) --' % (self.pagemax)
-#        print 'self.urlbase: ' + self.urlbase
-#        print 'self.imgbase: ' + self.imgbase
-#        print 'self.destdir: ' + self.destdir
-#        print 'self.imgend: ' + self.imgend
-#        print 'self.size: ' + self.size
+
+        self.printV( '(%r pages) --' % (self.pagemax))
+        self.printV( 'self.urlbase: ' + self.urlbase)
+        self.printV( 'self.imgbase: ' + self.imgbase)
+        self.printV( 'self.destdir: ' + self.destdir)
+        self.printV( 'self.imgend: ' + self.imgend)
+        self.printV( 'self.size: ' + self.size)
 
         self.ignore = self.getIgnoreSet() 
+
+    def printV(self, m):
+        if self.verbose:
+            print m
 
     def getNumPages(self):
         f = urllib.urlopen(self.imgbase)
@@ -46,6 +53,7 @@ class Getter:
                 val = int(s[4:])
                 if val > maxpage:
                     maxpage = val
+        self.printV('Total Pages: %r' % (maxpage,))
         return maxpage
 
     def executeGets(self):
@@ -75,12 +83,12 @@ class Getter:
             s = s.strip()
             if 'sv_title_' in s:
                 imgnum = s.split('_')[2]
-                #print '\timage: %s' % imgnum,
+                self.printV('\timage: %s' % imgnum)
                 if imgnum in self.ignore:
-                    #print ' ...ignore'
+                    self.printV('\t\tignoring')
                     pass
                 else:
-                    #print ' ...get'
+                    self.printV('\t\tgetting')
                     self.getImage(imgnum)
                     all_ignored = False
         return all_ignored
@@ -94,7 +102,7 @@ class Getter:
         for s in splitted:
             s = s.strip()
             if '_'+self.size+'.jpg' in s:
-                print 'imgurl: %s' % s
+                self.printV('imgurl: %r' % (s,))
                 self.downloadImage(s, imgnum)
 
     def downloadImage(self, imgurl, imgnum):
@@ -109,21 +117,67 @@ class Getter:
         dlimage.close()
         img.close()
 
+def helpit():
+    print 'Getter [-vhdas]'
+    print '\t[-v --verbose] print program execution'
+    print '\t[-h --help] show this help page'
+    print '\t[-d --dest [directory]] folder location where stuff goes'
+    print '\t[-a --album [album]] name of album to be downloaded'
+    print '\t[-s --size [o|l|m|s]] size of images to download'
+    print 'example album: -a gracepointaustin'
+    print 'example dest: -d /Users/bobby/Pictures/ChristmasPics'
+    print 'example size: -s o'
 
 if __name__ == '__main__':
     test = False
 
     if not test:
-        print '-- RUNNING ',
-        SIZE = 'o'
+        try:
+            opts, args = getopt.getopt(sys.argv[1:], 'vhd:a:s:',
+                                ['help','dest','album','verbose','size'])
+        except getopt.GetoptError, err:
+            print str(err)
+            sys.exit(2)
+        verbose = False
+        helpme = False
+        dest = None
+        album = None
+        size = None
+        for o, a in opts:
+            if o in ('-v', '--verbose'):
+                verbose = True
+            elif o in ('-h', '--help'):
+                helpme = True
+            elif o in ('-d', '--destdir'):
+                dest = a
+            elif o in ('-a', '--album'):
+                album = a
+            elif o in ('-s', '--size'):
+                size = a
+            else:
+                print 'Unknown Option'
+                helpit()
+                sys.exit(0)
+
+        if helpme or not dest or not album or not size:
+            helpit()
+            sys.exit(0)
+
+        if not size in ('o', 'l', 'm', 's'):
+            print 'invalid size'
+            helpit()
+            sys.exit(0)
+
+        print '-- DOWNLOADING ',
+        #size = 'o'
         #URLBASE = 'http://www.flickr.com/photos/gracepointaustin/page'
 #       DESTDIR = '/Users/seth/Pictures/Ktemp'
-        DESTDIR = '/Users/seth/Pictures/Koinonia'
+        #destdir = '/Users/seth/Pictures/Koinonia'
         #IMGBASE = 'http://www.flickr.com/photos/gracepointaustin/'
-        ALBUM = 'gracepointaustin'
+        #album = 'gracepointaustin'
 
         
-        g = Getter(size=SIZE,destdir=DESTDIR, album=ALBUM)
+        g = Getter(verbose=verbose, size=size, destdir=dest, album=album)
         g.executeGets()
 
     else:  # test mode
