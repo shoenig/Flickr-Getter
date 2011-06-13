@@ -6,11 +6,12 @@
 import getopt
 import os
 import sys 
+import time
 import urllib
 
 class Getter:
 
-    def __init__(self, size=None, destdir=None, album = None, verbose=False):
+    def __init__(self,pagemin=0, size=None, destdir=None, album = None, verbose=False):
         if  size==None or album==None: 
             print 'Invlaid Setup: '
             print '\tsize: %s'    % str(size)
@@ -21,14 +22,14 @@ class Getter:
         
         self.verbose = verbose
         self.urlbase =  'http://www.flickr.com/photos/' + album + '/page'
-        self.pagemin = 0
+        self.pagemin = int(pagemin)
         self.imgbase = 'http://www.flickr.com/photos/' + album + '/'
         self.destdir = destdir
         self.imgend = '/sizes/' + size + '/in/photostream/'
         self.size = size
         self.pagemax = self.getNumPages()
 
-        self.printV( '(%r pages) --' % (self.pagemax))
+        print '(%r pages) --' % (self.pagemax)
         self.printV( 'self.urlbase: ' + self.urlbase)
         self.printV( 'self.imgbase: ' + self.imgbase)
         self.printV( 'self.destdir: ' + self.destdir)
@@ -61,8 +62,8 @@ class Getter:
             print 'Working on page: %d' % i
             all_ignored = self.doPage(i)
             if all_ignored:
-                print 'Done.'
                 break
+        print 'Done.'
 
     def getIgnoreSet(self):
         files = set()
@@ -94,9 +95,14 @@ class Getter:
 
     def getImage(self, imgnum):
         imgpageurl = self.imgbase + imgnum + self.imgend
-        f = urllib.urlopen(imgpageurl)
-        content = f.read()
-        f.close()
+        try:
+            f = urllib.urlopen(imgpageurl)
+            content = f.read()
+            f.close()
+        except:
+            time.sleep(2)
+            self.getImage(imgnum)
+            return
         splitted = content.split('"')
         for s in splitted:
             s = s.strip()
@@ -105,14 +111,24 @@ class Getter:
                 self.downloadImage(s, imgnum)
 
     def downloadImage(self, imgurl, imgnum):
+        t0 = time.time()
         fpath = self.destdir + '/' + imgnum + '.jpg' 
         dlimage = file(fpath, 'wb')
         img = urllib.urlopen(imgurl)
-        while True:
+        elapsed = 0
+        while elapsed < 30.0:
             buf = img.read(65536)
             if len(buf) == 0:
                 break
             dlimage.write(buf)
+            elapsed = time.time() - t0
+        if(elapsed >= 30.0):
+            self.printV('image download timed out! trying again')
+            dlimage.close()
+            img.close()
+            os.remove(fpath)
+            self.downloadImage(imgurl, imgnum)
+            return
         dlimage.close()
         img.close()
 
@@ -130,8 +146,8 @@ def helpit():
 if __name__ == '__main__':
 
     try:
-        opts, args = getopt.getopt(sys.argv[1:], 'vhd:a:s:',
-                            ['help','dest','album','verbose','size'])
+        opts, args = getopt.getopt(sys.argv[1:], 'vhd:a:s:m:',
+                            ['help','dest','album','verbose','size','min'])
     except getopt.GetoptError, err:
         print str(err)
         sys.exit(2)
@@ -140,6 +156,7 @@ if __name__ == '__main__':
     dest = None
     album = None
     size = None
+    minpage = 0
     for o, a in opts:
         if o in ('-v', '--verbose'):
             verbose = True
@@ -151,6 +168,8 @@ if __name__ == '__main__':
             album = a
         elif o in ('-s', '--size'):
             size = a
+        elif o in ('-m', '--min'):
+            minpage = a
         else:
             print 'Unknown Option'
             helpit()
@@ -167,6 +186,6 @@ if __name__ == '__main__':
 
     print '-- DOWNLOADING ',
     
-    g = Getter(verbose=verbose, size=size, destdir=dest, album=album)
+    g = Getter(pagemin=minpage, verbose=verbose, size=size, destdir=dest, album=album)
     g.executeGets()
 
