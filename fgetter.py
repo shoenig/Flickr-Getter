@@ -111,26 +111,30 @@ class Getter:
                 self.downloadImage(s, imgnum)
 
     def downloadImage(self, imgurl, imgnum):
-        t0 = time.time()
-        fpath = self.destdir + '/' + imgnum + '.jpg' 
-        dlimage = file(fpath, 'wb')
-        img = urllib.urlopen(imgurl)
-        elapsed = 0
-        while elapsed < 30.0:
-            buf = img.read(65536)
-            if len(buf) == 0:
-                break
-            dlimage.write(buf)
-            elapsed = time.time() - t0
-        if(elapsed >= 30.0):
-            self.printV('image download timed out! trying again')
+        try:
+            t0 = time.time()
+            fpath = self.destdir + '/' + imgnum + '.jpg' 
+            dlimage = file(fpath, 'wb')
+            img = urllib.urlopen(imgurl)
+            elapsed = 0
+            while elapsed < 30.0:
+                buf = img.read(65536)
+                if len(buf) == 0:
+                    break
+                dlimage.write(buf)
+                elapsed = time.time() - t0
+            if(elapsed >= 30.0):
+                self.printV('image download timed out! trying again')
+                dlimage.close()
+                img.close()
+                os.remove(fpath)
+                self.downloadImage(imgurl, imgnum)
+                return
             dlimage.close()
             img.close()
-            os.remove(fpath)
-            self.downloadImage(imgurl, imgnum)
-            return
-        dlimage.close()
-        img.close()
+        except:
+            sleep(2)
+            downloadImage(imgurl, imgnum)
 
 def helpit():
     print 'Getter [-vhdas]'
