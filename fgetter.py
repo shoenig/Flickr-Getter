@@ -54,7 +54,7 @@ class Getter:
                 val = int(s[4:])
                 if val > maxpage:
                     maxpage = val
-        self.printV('Total Pages: %r' % (maxpage,))
+
         return maxpage
 
     def executeGets(self):
@@ -150,8 +150,8 @@ def helpit():
 if __name__ == '__main__':
 
     try:
-        opts, args = getopt.getopt(sys.argv[1:], 'vhd:a:s:m:',
-                            ['help','dest','album','verbose','size','min'])
+        opts, args = getopt.getopt(sys.argv[1:], 'evhd:a:s:m:',
+                            ['easteregg','help','dest','album','verbose','size','min'])
     except getopt.GetoptError, err:
         print str(err)
         sys.exit(2)
@@ -161,6 +161,7 @@ if __name__ == '__main__':
     album = None
     size = None
     minpage = 0
+    easteregg = True
     for o, a in opts:
         if o in ('-v', '--verbose'):
             verbose = True
@@ -174,10 +175,17 @@ if __name__ == '__main__':
             size = a
         elif o in ('-m', '--min'):
             minpage = a
+        elif o in ('-e', '--easteregg'):
+            easteregg = True
         else:
             print 'Unknown Option'
             helpit()
             sys.exit(0)
+
+    if easteregg:
+        size = 'o'
+        album = 'gracepointaustin'
+        dest = '/Users/seth/Pictures/GPA'
 
     if helpme or not dest or not album or not size:
         helpit()
