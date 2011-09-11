@@ -73,16 +73,19 @@ class Getter:
         return files
 
     def doPage(self, curPage):
+        self.printV('in doPage(%d): ' % curPage)
         urlstr = self.urlbase + str(curPage) + '/'
         f = urllib.urlopen(urlstr)
+        self.printV('urlstr: %s' % urlstr)
         content = f.read()
         f.close()
         splitted = content.split('"')
         all_ignored = True
         for s in  splitted:
             s = s.strip()
-            if 'sv_title_' in s:
-                imgnum = s.split('_')[2]
+            if '/in/photostream' in s:
+                self.printV('s: %s' % s)
+                imgnum = s.split('/')[3]
                 self.printV('\timage: %s' % imgnum)
                 if imgnum in self.ignore:
                     self.printV('\t\tignoring')
@@ -185,7 +188,7 @@ if __name__ == '__main__':
     if easteregg:
         size = 'o'
         album = 'gracepointaustin'
-        dest = '/Users/seth/Pictures/GPA'
+        dest = '/media/tc/GPA/'
 
     if helpme or not dest or not album or not size:
         helpit()
