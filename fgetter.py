@@ -136,7 +136,7 @@ class Getter:
             dlimage.close()
             img.close()
         except:
-            sleep(2)
+            time.sleep(2)
             downloadImage(imgurl, imgnum)
 
 def helpit():
